@@ -25,25 +25,6 @@
       min-height: 100vh;
     }
 
-    .btn {
-      background: var(--gold);
-      color: #000;
-      border: none;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 18px;
-      letter-spacing: 2px;
-      padding: 12px 40px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-      transition: opacity 0.15s;
-    }
-    .btn:hover { opacity: 0.9; }
-    .btn.danger { background: var(--red); color: #fff; font-size: 12px; padding: 6px 12px; width: auto; letter-spacing: 1px; }
-
-    /* Dashboard */
-    .dashboard { display: block; }
-
     .dash-header {
       background: #000;
       border-bottom: 3px solid var(--gold);
@@ -62,7 +43,6 @@
     }
     .dash-header .meta { color: rgba(255,255,255,0.5); font-size: 13px; }
 
-    /* Stats bar */
     .stats-bar {
       display: flex;
       gap: 16px;
@@ -85,7 +65,6 @@
     }
     .stat-card .stat-label { font-size: 12px; color: rgba(255,255,255,0.45); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
 
-    /* Table */
     .table-wrap {
       padding: 0 32px 60px;
       overflow-x: auto;
@@ -145,7 +124,6 @@
 
     .date-cell { color: rgba(255,255,255,0.35); font-size: 12px; white-space: nowrap; }
 
-    /* Export button */
     .actions-bar {
       padding: 0 32px 16px;
       display: flex;
@@ -166,13 +144,14 @@
     }
     .btn-export:hover { background: rgba(245,200,66,0.1); }
 
+    .btn { background: transparent; border: 1px solid var(--red); color: var(--red); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: rgba(230,57,70,0.1); }
+
     .loading { text-align: center; padding: 60px; color: rgba(255,255,255,0.3); font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; }
-    .error-msg { text-align: center; padding: 20px; color: var(--red); font-size: 16px; }
+    .error-text { color: var(--red); text-align: center; padding: 40px; font-size: 14px; }
   </style>
 </head>
 <body>
-
-<div class="dashboard" id="dashboard">
 
   <div class="dash-header">
     <div>
@@ -181,7 +160,7 @@
     </div>
   </div>
 
-  <div class="stats-bar" id="statsBar">
+  <div class="stats-bar">
     <div class="stat-card"><div class="stat-num" id="statTotal">–</div><div class="stat-label">Total</div></div>
     <div class="stat-card"><div class="stat-num" id="statBoth">–</div><div class="stat-label">Both Events</div></div>
     <div class="stat-card"><div class="stat-num" id="statSeville">–</div><div class="stat-label">Seville Only</div></div>
@@ -200,30 +179,20 @@
     <div id="tableContainer"><div class="loading">LOADING…</div></div>
   </div>
 
-</div>
-
 <script>
   let allResponses = [];
 
-  // Automatically load data when the script runs
-  document.addEventListener('DOMContentLoaded', loadData);
-
   async function loadData() {
+    document.getElementById('tableContainer').innerHTML = '<div class="loading">LOADING…</div>';
     try {
       const res = await fetch('/api/admin/responses');
-      
-      if (!res.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
+      if (!res.ok) throw new Error('Failed');
       const data = await res.json();
       allResponses = data.responses || [];
-
       renderStats(allResponses);
       renderTable(allResponses);
-
-    } catch (err) {
-      document.getElementById('tableContainer').innerHTML = '<div class="error-msg">Network error. Failed to load responses.</div>';
+    } catch {
+      document.getElementById('tableContainer').innerHTML = '<div class="error-text">Failed to load responses. Make sure the server is running.</div>';
     }
   }
 
@@ -253,7 +222,6 @@
       document.getElementById('tableContainer').innerHTML = '<div class="loading">NO RESPONSES YET</div>';
       return;
     }
-
     const rows = rs.map(r => `
       <tr>
         <td><strong>${escHtml(r.fullName)}</strong></td>
@@ -266,7 +234,7 @@
         ${cell(r.greenwichPlan)}
         ${cell(r.suggestions ? escHtml(r.suggestions) : null)}
         <td class="date-cell">${new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</td>
-        <td><button class="btn danger" onclick="deleteResponse('${r.id}')">Delete</button></td>
+        <td><button class="btn" onclick="deleteResponse('${r.id}')">Delete</button></td>
       </tr>
     `).join('');
 
@@ -274,17 +242,9 @@
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Attending</th>
-            <th>Seville Likelihood</th>
-            <th>Days</th>
-            <th>La Liga</th>
-            <th>Match Type</th>
-            <th>Accommodation</th>
-            <th>Greenwich Plan</th>
-            <th>Suggestions</th>
-            <th>Submitted</th>
-            <th></th>
+            <th>Name</th><th>Attending</th><th>Seville Likelihood</th><th>Days</th>
+            <th>La Liga</th><th>Match Type</th><th>Accommodation</th>
+            <th>Greenwich Plan</th><th>Suggestions</th><th>Submitted</th><th></th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -294,14 +254,11 @@
 
   async function deleteResponse(id) {
     if (!confirm('Delete this response?')) return;
-    const res = await fetch(`/api/admin/responses/${id}`, {
-      method: 'DELETE'
-    });
+    const res = await fetch(`/api/admin/responses/${id}`, { method: 'DELETE' });
     if (res.ok) loadData();
   }
 
   function escHtml(str) {
-    if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
@@ -317,6 +274,8 @@
     a.download = `survey-responses-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
   }
+
+  loadData();
 </script>
 </body>
 </html>

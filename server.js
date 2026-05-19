@@ -119,22 +119,14 @@ app.post("/api/submit", submitLimiter, (req, res) => {
   res.json({ success: true, message: "Response saved!" });
 });
 
-// Admin: view responses
+// Admin: view responses (open — no password)
 app.get("/api/admin/responses", adminLimiter, (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth || auth !== `Bearer ${ADMIN_PASSWORD}`) {
-    return res.status(401).json({ error: "Unauthorised." });
-  }
   const responses = loadResponses().map(({ ip, ...rest }) => rest);
   res.json({ count: responses.length, responses });
 });
 
-// Admin: delete a response
+// Admin: delete a response (open — no password)
 app.delete("/api/admin/responses/:id", adminLimiter, (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth || auth !== `Bearer ${ADMIN_PASSWORD}`) {
-    return res.status(401).json({ error: "Unauthorised." });
-  }
   const responses = loadResponses();
   const idx = responses.findIndex((r) => r.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: "Not found." });
