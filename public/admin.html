@@ -263,16 +263,20 @@
   }
 
   function exportCSV() {
-    if (!allResponses.length) return;
+    if (!allResponses.length) { alert('No responses to export yet.'); return; }
     const cols = ['fullName','attendingEvents','sevilleLikelihood','sevilleDays','sevilleLaLiga','sevilleMatch','sevilleAccommodation','greenwichPlan','suggestions','submittedAt'];
-    const header = cols.join(',');
+    const headers = ['Name','Attending','Seville Likelihood','Days','La Liga','Match Type','Accommodation','Greenwich Plan','Suggestions','Submitted'];
     const rows = allResponses.map(r => cols.map(c => `"${(r[c] || '').toString().replace(/"/g,'""')}"`).join(','));
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `survey-responses-${new Date().toISOString().slice(0,10)}.csv`;
+    a.href = url;
+    a.setAttribute('download', `survey-responses-${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   loadData();
