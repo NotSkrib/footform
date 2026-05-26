@@ -6,6 +6,9 @@
   <title>Survey Admin ⚽</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
   <style>
     :root {
       --pitch: #111a14;
@@ -25,68 +28,6 @@
       min-height: 100vh;
     }
 
-    /* Login screen */
-    .login-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    .login-box {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 380px;
-      text-align: center;
-    }
-    .login-box h1 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 36px;
-      letter-spacing: 2px;
-      color: var(--gold);
-      margin-bottom: 8px;
-    }
-    .login-box p { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 28px; }
-
-    .pw-input {
-      width: 100%;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--white);
-      font-family: 'Barlow', sans-serif;
-      font-size: 16px;
-      padding: 12px 16px;
-      outline: none;
-      margin-bottom: 14px;
-      transition: border-color 0.2s;
-    }
-    .pw-input:focus { border-color: var(--gold); }
-
-    .btn {
-      background: var(--gold);
-      color: #000;
-      border: none;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 18px;
-      letter-spacing: 2px;
-      padding: 12px 40px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-      transition: opacity 0.15s;
-    }
-    .btn:hover { opacity: 0.9; }
-    .btn.danger { background: var(--red); color: #fff; font-size: 12px; padding: 6px 12px; width: auto; letter-spacing: 1px; }
-
-    .error-msg { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 18px; }
-
-    /* Dashboard */
-    .dashboard { display: none; }
-
     .dash-header {
       background: #000;
       border-bottom: 3px solid var(--gold);
@@ -105,21 +46,6 @@
     }
     .dash-header .meta { color: rgba(255,255,255,0.5); font-size: 13px; }
 
-    .btn-logout {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: rgba(255,255,255,0.5);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px;
-      letter-spacing: 1px;
-      padding: 6px 14px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-logout:hover { border-color: var(--red); color: var(--red); }
-
-    /* Stats bar */
     .stats-bar {
       display: flex;
       gap: 16px;
@@ -142,7 +68,6 @@
     }
     .stat-card .stat-label { font-size: 12px; color: rgba(255,255,255,0.45); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
 
-    /* Table */
     .table-wrap {
       padding: 0 32px 60px;
       overflow-x: auto;
@@ -202,14 +127,13 @@
 
     .date-cell { color: rgba(255,255,255,0.35); font-size: 12px; white-space: nowrap; }
 
-    /* Export button */
     .actions-bar {
       padding: 0 32px 16px;
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
     }
-    .btn-export {
+    .btn-action {
       background: transparent;
       border: 1px solid var(--gold);
       color: var(--gold);
@@ -221,36 +145,25 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-export:hover { background: rgba(245,200,66,0.1); }
+    .btn-action:hover { background: rgba(245,200,66,0.1); }
+
+    .btn { background: transparent; border: 1px solid var(--red); color: var(--red); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+    .btn:hover { background: rgba(230,57,70,0.1); }
 
     .loading { text-align: center; padding: 60px; color: rgba(255,255,255,0.3); font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; }
+    .error-text { color: var(--red); text-align: center; padding: 40px; font-size: 14px; }
   </style>
 </head>
 <body>
-
-<!-- Login -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-box">
-    <h1>⚽ Admin</h1>
-    <p>Survey responses dashboard</p>
-    <input type="password" id="pwInput" class="pw-input" placeholder="Enter admin password" />
-    <button class="btn" onclick="login()">ENTER</button>
-    <div class="error-msg" id="loginError"></div>
-  </div>
-</div>
-
-<!-- Dashboard -->
-<div class="dashboard" id="dashboard">
 
   <div class="dash-header">
     <div>
       <h1>⚽ Survey Responses</h1>
       <div class="meta">10 Year Anniversary · Seville &amp; Greenwich</div>
     </div>
-    <button class="btn-logout" onclick="logout()">LOG OUT</button>
   </div>
 
-  <div class="stats-bar" id="statsBar">
+  <div class="stats-bar">
     <div class="stat-card"><div class="stat-num" id="statTotal">–</div><div class="stat-label">Total</div></div>
     <div class="stat-card"><div class="stat-num" id="statBoth">–</div><div class="stat-label">Both Events</div></div>
     <div class="stat-card"><div class="stat-num" id="statSeville">–</div><div class="stat-label">Seville Only</div></div>
@@ -260,8 +173,9 @@
   </div>
 
   <div class="actions-bar">
-    <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-    <button class="btn-export" onclick="loadData()">↻ Refresh</button>
+    <button class="btn-action" onclick="exportXLSX()">⬇ Download XLSX</button>
+    <button class="btn-action" onclick="viewInNewTab()">↗ View in New Tab</button>
+    <button class="btn-action" onclick="loadData()">↻ Refresh</button>
   </div>
 
   <div class="table-wrap">
@@ -269,54 +183,20 @@
     <div id="tableContainer"><div class="loading">LOADING…</div></div>
   </div>
 
-</div>
-
 <script>
-  let token = '';
   let allResponses = [];
 
-  function login() {
-    const pw = document.getElementById('pwInput').value;
-    if (!pw) { document.getElementById('loginError').textContent = 'Enter a password.'; return; }
-    token = pw;
-    loadData();
-  }
-
-  document.getElementById('pwInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') login();
-  });
-
-  function logout() {
-    token = '';
-    allResponses = [];
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('dashboard').style.display = 'none';
-    document.getElementById('pwInput').value = '';
-  }
-
   async function loadData() {
+    document.getElementById('tableContainer').innerHTML = '<div class="loading">LOADING…</div>';
     try {
-      const res = await fetch('/api/admin/responses', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.status === 401) {
-        document.getElementById('loginError').textContent = 'Wrong password. Try again.';
-        return;
-      }
-
+      const res = await fetch('/api/admin/responses');
+      if (!res.ok) throw new Error('Failed');
       const data = await res.json();
       allResponses = data.responses || [];
-
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      document.getElementById('loginError').textContent = '';
-
       renderStats(allResponses);
       renderTable(allResponses);
-
-    } catch (err) {
-      document.getElementById('loginError').textContent = 'Network error.';
+    } catch {
+      document.getElementById('tableContainer').innerHTML = '<div class="error-text">Failed to load responses. Make sure the server is running.</div>';
     }
   }
 
@@ -346,7 +226,6 @@
       document.getElementById('tableContainer').innerHTML = '<div class="loading">NO RESPONSES YET</div>';
       return;
     }
-
     const rows = rs.map(r => `
       <tr>
         <td><strong>${escHtml(r.fullName)}</strong></td>
@@ -359,7 +238,7 @@
         ${cell(r.greenwichPlan)}
         ${cell(r.suggestions ? escHtml(r.suggestions) : null)}
         <td class="date-cell">${new Date(r.submittedAt).toLocaleDateString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</td>
-        <td><button class="btn danger" onclick="deleteResponse('${r.id}')">Delete</button></td>
+        <td><button class="btn" onclick="deleteResponse('${r.id}')">Delete</button></td>
       </tr>
     `).join('');
 
@@ -367,17 +246,9 @@
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Attending</th>
-            <th>Seville Likelihood</th>
-            <th>Days</th>
-            <th>La Liga</th>
-            <th>Match Type</th>
-            <th>Accommodation</th>
-            <th>Greenwich Plan</th>
-            <th>Suggestions</th>
-            <th>Submitted</th>
-            <th></th>
+            <th>Name</th><th>Attending</th><th>Seville Likelihood</th><th>Days</th>
+            <th>La Liga</th><th>Match Type</th><th>Accommodation</th>
+            <th>Greenwich Plan</th><th>Suggestions</th><th>Submitted</th><th></th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -387,10 +258,7 @@
 
   async function deleteResponse(id) {
     if (!confirm('Delete this response?')) return;
-    const res = await fetch(`/api/admin/responses/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const res = await fetch(`/api/admin/responses/${id}`, { method: 'DELETE' });
     if (res.ok) loadData();
   }
 
@@ -398,18 +266,82 @@
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function exportCSV() {
-    if (!allResponses.length) return;
-    const cols = ['fullName','attendingEvents','sevilleLikelihood','sevilleDays','sevilleLaLiga','sevilleMatch','sevilleAccommodation','greenwichPlan','suggestions','submittedAt'];
-    const header = cols.join(',');
-    const rows = allResponses.map(r => cols.map(c => `"${(r[c] || '').toString().replace(/"/g,'""')}"`).join(','));
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `survey-responses-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
+  // --- NEW XLSX EXPORT FUNCTION ---
+  function exportXLSX() {
+    if (!allResponses.length) { alert('No responses to export yet.'); return; }
+    
+    // Map the JSON data into a clean object format for Excel
+    const dataForExcel = allResponses.map(r => ({
+      "Name": r.fullName || '',
+      "Attending": r.attendingEvents || '',
+      "Seville Likelihood": r.sevilleLikelihood || '',
+      "Days": r.sevilleDays || '',
+      "La Liga": r.sevilleLaLiga || '',
+      "Match Type": r.sevilleMatch || '',
+      "Accommodation": r.sevilleAccommodation || '',
+      "Greenwich Plan": r.greenwichPlan || '',
+      "Suggestions": r.suggestions || '',
+      "Submitted": new Date(r.submittedAt).toLocaleString('en-GB')
+    }));
+
+    // Create a new workbook and add the data
+    const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Survey Responses");
+
+    // Generate and download the file
+    const dateStr = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(workbook, `survey-responses-${dateStr}.xlsx`);
   }
+
+  // --- NEW VIEW IN NEW TAB FUNCTION ---
+  function viewInNewTab() {
+    if (!allResponses.length) { alert('No responses to view yet.'); return; }
+    
+    const newTab = window.open();
+    if (!newTab) {
+      alert('Please allow pop-ups for this site to view the data in a new tab.');
+      return;
+    }
+
+    const headers = ['Name','Attending','Seville Likelihood','Days','La Liga','Match Type','Accommodation','Greenwich Plan','Suggestions','Submitted'];
+    const cols = ['fullName','attendingEvents','sevilleLikelihood','sevilleDays','sevilleLaLiga','sevilleMatch','sevilleAccommodation','greenwichPlan','suggestions','submittedAt'];
+
+    const thead = `<tr>${headers.map(h => `<th style="text-align:left; padding:10px; background:#f4f4f4; border-bottom:2px solid #ddd;">${h}</th>`).join('')}</tr>`;
+    
+    const tbody = allResponses.map(r => {
+      return `<tr>${cols.map(c => {
+        let val = r[c] || '';
+        if (c === 'submittedAt') val = new Date(val).toLocaleString('en-GB');
+        return `<td style="padding:10px; border-bottom:1px solid #eee; vertical-align:top;">${escHtml(val)}</td>`;
+      }).join('')}</tr>`;
+    }).join('');
+
+    newTab.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Survey Data View</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #333; }
+            h2 { margin-top: 0; }
+            table { width: 100%; border-collapse: collapse; font-size: 14px; }
+            tr:hover { background-color: #f9f9f9; }
+          </style>
+        </head>
+        <body>
+          <h2>Survey Responses</h2>
+          <table>
+            <thead>${thead}</thead>
+            <tbody>${tbody}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    newTab.document.close();
+  }
+
+  loadData();
 </script>
 </body>
 </html>
