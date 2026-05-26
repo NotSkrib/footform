@@ -6,6 +6,9 @@
   <title>Survey Admin ⚽</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet" />
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
   <style>
     :root {
       --pitch: #111a14;
@@ -130,7 +133,7 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    .btn-export {
+    .btn-action {
       background: transparent;
       border: 1px solid var(--gold);
       color: var(--gold);
@@ -142,7 +145,7 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-export:hover { background: rgba(245,200,66,0.1); }
+    .btn-action:hover { background: rgba(245,200,66,0.1); }
 
     .btn { background: transparent; border: 1px solid var(--red); color: var(--red); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
     .btn:hover { background: rgba(230,57,70,0.1); }
@@ -170,8 +173,9 @@
   </div>
 
   <div class="actions-bar">
-    <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-    <button class="btn-export" onclick="loadData()">↻ Refresh</button>
+    <button class="btn-action" onclick="exportXLSX()">⬇ Download XLSX</button>
+    <button class="btn-action" onclick="viewInNewTab()">↗ View in New Tab</button>
+    <button class="btn-action" onclick="loadData()">↻ Refresh</button>
   </div>
 
   <div class="table-wrap">
@@ -262,21 +266,79 @@
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function exportCSV() {
+  // --- NEW XLSX EXPORT FUNCTION ---
+  function exportXLSX() {
     if (!allResponses.length) { alert('No responses to export yet.'); return; }
-    const cols = ['fullName','attendingEvents','sevilleLikelihood','sevilleDays','sevilleLaLiga','sevilleMatch','sevilleAccommodation','greenwichPlan','suggestions','submittedAt'];
+    
+    // Map the JSON data into a clean object format for Excel
+    const dataForExcel = allResponses.map(r => ({
+      "Name": r.fullName || '',
+      "Attending": r.attendingEvents || '',
+      "Seville Likelihood": r.sevilleLikelihood || '',
+      "Days": r.sevilleDays || '',
+      "La Liga": r.sevilleLaLiga || '',
+      "Match Type": r.sevilleMatch || '',
+      "Accommodation": r.sevilleAccommodation || '',
+      "Greenwich Plan": r.greenwichPlan || '',
+      "Suggestions": r.suggestions || '',
+      "Submitted": new Date(r.submittedAt).toLocaleString('en-GB')
+    }));
+
+    // Create a new workbook and add the data
+    const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Survey Responses");
+
+    // Generate and download the file
+    const dateStr = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(workbook, `survey-responses-${dateStr}.xlsx`);
+  }
+
+  // --- NEW VIEW IN NEW TAB FUNCTION ---
+  function viewInNewTab() {
+    if (!allResponses.length) { alert('No responses to view yet.'); return; }
+    
+    const newTab = window.open();
+    if (!newTab) {
+      alert('Please allow pop-ups for this site to view the data in a new tab.');
+      return;
+    }
+
     const headers = ['Name','Attending','Seville Likelihood','Days','La Liga','Match Type','Accommodation','Greenwich Plan','Suggestions','Submitted'];
-    const rows = allResponses.map(r => cols.map(c => `"${(r[c] || '').toString().replace(/"/g,'""')}"`).join(','));
-    const csv = [headers.join(','), ...rows].join('\r\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.setAttribute('download', `survey-responses-${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const cols = ['fullName','attendingEvents','sevilleLikelihood','sevilleDays','sevilleLaLiga','sevilleMatch','sevilleAccommodation','greenwichPlan','suggestions','submittedAt'];
+
+    const thead = `<tr>${headers.map(h => `<th style="text-align:left; padding:10px; background:#f4f4f4; border-bottom:2px solid #ddd;">${h}</th>`).join('')}</tr>`;
+    
+    const tbody = allResponses.map(r => {
+      return `<tr>${cols.map(c => {
+        let val = r[c] || '';
+        if (c === 'submittedAt') val = new Date(val).toLocaleString('en-GB');
+        return `<td style="padding:10px; border-bottom:1px solid #eee; vertical-align:top;">${escHtml(val)}</td>`;
+      }).join('')}</tr>`;
+    }).join('');
+
+    newTab.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Survey Data View</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #333; }
+            h2 { margin-top: 0; }
+            table { width: 100%; border-collapse: collapse; font-size: 14px; }
+            tr:hover { background-color: #f9f9f9; }
+          </style>
+        </head>
+        <body>
+          <h2>Survey Responses</h2>
+          <table>
+            <thead>${thead}</thead>
+            <tbody>${tbody}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    newTab.document.close();
   }
 
   loadData();
